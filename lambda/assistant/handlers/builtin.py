@@ -7,13 +7,10 @@ from ask_sdk_core.utils import is_intent_name, is_request_type
 
 from assistant.handlers.base import respond
 
-# TODO(v0.2): update these texts for free-form questions.
-WELCOME = (
-    "Olá! Posso dizer-te o que tens esta semana, num dia específico, ou qual é o próximo evento. O que queres saber?"
-)
-HELP = "Experimenta dizer: o que tenho esta semana, o que tenho amanhã, ou qual é a próxima entrega."
+WELCOME = "Olá! Pergunta-me o que quiseres sobre as tuas aulas, testes, entregas ou materiais do Moodle."
+HELP = "Podes perguntar, por exemplo: o que tenho amanhã, quando é o teste de ARQCP, ou que materiais há em LAPR3."
 GOODBYE = "Até já! Bom estudo."
-FALLBACK = "Ainda não sei responder a isso. Pergunta-me pelo teu calendário do Moodle."
+FALLBACK = "Não percebi. Experimenta perguntar, por exemplo, o que tens amanhã."
 
 
 def _is_any_intent(handler_input, *names: str) -> bool:

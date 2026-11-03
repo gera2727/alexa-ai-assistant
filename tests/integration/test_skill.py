@@ -3,82 +3,85 @@
 import pytest
 
 from assistant import config
+from assistant.integrations.llm import LLMError
 from assistant.skill import build_skill
 
 
-def _envelope(request_type, intent=None, slots=None):
+def _envelope(request_type, intent=None, slots=None, new_session=True):
     request = {"type": request_type, "requestId": "req-1", "locale": "pt-BR", "timestamp": "2026-11-03T14:00:00Z"}
     if intent:
         request["intent"] = {"name": intent, "confirmationStatus": "NONE", "slots": slots or {}}
     ids = {"application": {"applicationId": "app-1"}, "user": {"userId": "user-1"}}
     return {
         "version": "1.0",
-        "session": {"new": True, "sessionId": "session-1", **ids},
+        "session": {"new": new_session, "sessionId": "session-1", **ids},
         "context": {"System": {**ids, "apiEndpoint": "https://api.amazonalexa.com"}},
         "request": request,
     }
 
 
-def _date_slot(value):
-    return {"date": {"name": "date", "value": value, "confirmationStatus": "NONE"}}
+def _question(text):
+    return {"question": {"name": "question", "value": text, "confirmationStatus": "NONE"}}
 
 
-@pytest.fixture
-def invoke(sample_events, now):
-    handler = build_skill(events=lambda: sample_events, clock=lambda: now).lambda_handler()
+class FakeAssistant:
+    def __init__(self, reply="Amanhã tens a entrega do Sprint 1 às 23:59.", error=None):
+        self.reply, self.error, self.questions = reply, error, []
 
-    def _invoke(*args, **kwargs):
-        response = handler(_envelope(*args, **kwargs), None)["response"]
-        return response["outputSpeech"]["ssml"], response.get("shouldEndSession")
+    def answer(self, question):
+        self.questions.append(question)
+        if self.error:
+            raise self.error
+        return self.reply
 
-    return _invoke
+
+def _run(assistant, *args, **kwargs):
+    response = build_skill(assistant).lambda_handler()(_envelope(*args, **kwargs), None)["response"]
+    return response["outputSpeech"]["ssml"], response.get("shouldEndSession")
 
 
-def test_launch_keeps_session_open(invoke):
-    speech, ends = invoke("LaunchRequest")
+def test_launch_keeps_session_open():
+    speech, ends = _run(FakeAssistant(), "LaunchRequest")
     assert "Olá" in speech
     assert not ends
 
 
-def test_upcoming_events(invoke):
-    speech, ends = invoke("IntentRequest", "UpcomingEventsIntent")
-    assert "Nos próximos 7 dias tens 3 eventos" in speech
+def test_one_shot_question_is_answered_and_ends():
+    assistant = FakeAssistant()
+    speech, ends = _run(assistant, "IntentRequest", "QuestionIntent", _question("o que tenho amanhã"))
+    assert assistant.questions == ["o que tenho amanhã"]
+    assert "entrega do Sprint 1" in speech
     assert ends
 
 
-def test_events_this_week(invoke):
-    speech, _ = invoke("IntentRequest", "EventsByDateIntent", _date_slot("2026-W45"))
-    assert "Na semana de 2 de novembro tens 2 eventos" in speech
-
-
-def test_events_tomorrow(invoke):
-    speech, _ = invoke("IntentRequest", "EventsByDateIntent", _date_slot("2026-11-04"))
-    assert "Amanhã tens 1 evento: Entrega Sprint 1" in speech
-
-
-def test_unsupported_date_asks_again(invoke):
-    speech, ends = invoke("IntentRequest", "EventsByDateIntent", _date_slot("2026-11"))
-    assert "só percebo dias ou semanas" in speech
+def test_question_inside_a_conversation_keeps_session_open():
+    _, ends = _run(FakeAssistant(), "IntentRequest", "QuestionIntent", _question("e depois?"), new_session=False)
     assert not ends
 
 
-def test_next_event(invoke):
-    speech, _ = invoke("IntentRequest", "NextEventIntent")
-    assert "O próximo é Entrega Sprint 1" in speech
+def test_empty_question_asks_again():
+    speech, ends = _run(FakeAssistant(), "IntentRequest", "QuestionIntent", {})
+    assert "Podes repetir" in speech
+    assert not ends
 
 
-def test_network_failure_is_spoken_not_raised(now):
-    def broken():
-        raise OSError("network down")
-
-    handler = build_skill(events=broken, clock=lambda: now).lambda_handler()
-    response = handler(_envelope("IntentRequest", "NextEventIntent"), None)
-    assert "Não consegui ler" in response["response"]["outputSpeech"]["ssml"]
+def test_rate_limit_is_explained():
+    speech, _ = _run(
+        FakeAssistant(error=LLMError("429", rate_limited=True)), "IntentRequest", "QuestionIntent", _question("x")
+    )
+    assert "muitos pedidos" in speech
 
 
-def test_missing_config_is_spoken_not_raised(monkeypatch):
-    monkeypatch.delenv("MOODLE_ICAL_URL", raising=False)
+def test_unexpected_failure_is_spoken_not_raised():
+    speech, _ = _run(FakeAssistant(error=OSError("network down")), "IntentRequest", "QuestionIntent", _question("x"))
+    assert "tive um problema" in speech
+
+
+@pytest.mark.parametrize("name", ["MOODLE_URL", "MOODLE_TOKEN", "GROQ_API_KEY"])
+def test_missing_config_is_spoken_not_raised(monkeypatch, name):
     monkeypatch.setattr(config, "_file_settings", dict)  # ignore a developer's local config.json
-    handler = build_skill().lambda_handler()
-    response = handler(_envelope("IntentRequest", "NextEventIntent"), None)
-    assert "Não consegui ler" in response["response"]["outputSpeech"]["ssml"]
+    for setting in ("MOODLE_URL", "MOODLE_TOKEN", "GROQ_API_KEY"):
+        monkeypatch.setenv(setting, "https://example.test")
+    monkeypatch.delenv(name)
+    speech, _ = _run(None, "IntentRequest", "QuestionIntent", _question("o que tenho amanhã"))
+    assert "tive um problema" in speech

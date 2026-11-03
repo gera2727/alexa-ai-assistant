@@ -4,11 +4,11 @@
       "locales": {
         "pt-BR": {
           "name": "Agenda do ISEP",
-          "summary": "Lê o teu calendário do Moodle e diz-te o que tens para fazer.",
-          "description": "Pergunta pelos teus prazos e eventos do Moodle: o que tens esta semana, num dia específico, ou qual é a próxima entrega.",
+          "summary": "Responde às tuas perguntas sobre aulas, testes, entregas e materiais do Moodle.",
+          "description": "Faz perguntas livres sobre o teu Moodle: o que tens amanhã, quando é um teste, que entregas faltam ou que materiais foram publicados numa disciplina. As respostas são geradas por um modelo de linguagem com os teus dados do Moodle.",
           "examplePhrases": [
             "Alexa, abre a agenda do isep",
-            "Alexa, pergunta à agenda do isep o que tenho esta semana",
+            "Alexa, pergunta à agenda do isep quando é o teste de arqcp",
             "Alexa, pergunta à agenda do isep qual é a próxima entrega"
           ],
           "keywords": ["moodle", "calendário", "estudante"]
@@ -16,7 +16,7 @@
       },
       "isAvailableWorldwide": false,
       "distributionCountries": ["PT"],
-      "testingInstructions": "Requires a Moodle iCal URL configured in lambda/config.json.",
+      "testingInstructions": "Requires Moodle and Groq settings in lambda/config.json (see config.example.json).",
       "category": "EDUCATION_AND_REFERENCE"
     },
     "apis": {

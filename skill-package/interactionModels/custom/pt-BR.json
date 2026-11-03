@@ -24,46 +24,150 @@
           "samples": []
         },
         {
-          "name": "UpcomingEventsIntent",
-          "slots": [],
-          "samples": [
-            "o que tenho esta semana",
-            "o que tenho nos próximos dias",
-            "quais são os meus eventos",
-            "o que tenho para fazer",
-            "que entregas tenho",
-            "o que há no moodle"
-          ]
-        },
-        {
-          "name": "EventsByDateIntent",
+          "name": "QuestionIntent",
           "slots": [
             {
-              "name": "date",
-              "type": "AMAZON.DATE"
+              "name": "question",
+              "type": "QUESTION_TEXT"
             }
           ],
           "samples": [
-            "o que tenho {date}",
-            "o que tenho para {date}",
-            "que eventos tenho {date}",
-            "tenho alguma coisa {date}",
-            "o que há no moodle {date}"
-          ]
-        },
-        {
-          "name": "NextEventIntent",
-          "slots": [],
-          "samples": [
-            "qual é a próxima entrega",
-            "qual é o próximo evento",
-            "o que é que vem a seguir",
-            "qual é o próximo teste",
-            "quando é a próxima entrega"
+            "{question}"
           ]
         }
       ],
-      "types": []
+      "types": [
+        {
+          "name": "QUESTION_TEXT",
+          "values": [
+            {
+              "name": {
+                "value": "o que tenho amanhã"
+              }
+            },
+            {
+              "name": {
+                "value": "o que tenho esta semana"
+              }
+            },
+            {
+              "name": {
+                "value": "o que tenho na próxima semana"
+              }
+            },
+            {
+              "name": {
+                "value": "quando é o teste de arqcp"
+              }
+            },
+            {
+              "name": {
+                "value": "quando é o próximo teste"
+              }
+            },
+            {
+              "name": {
+                "value": "qual é a próxima entrega"
+              }
+            },
+            {
+              "name": {
+                "value": "que entregas tenho esta semana"
+              }
+            },
+            {
+              "name": {
+                "value": "onde é que vou ter aula hoje"
+              }
+            },
+            {
+              "name": {
+                "value": "que aulas tenho hoje"
+              }
+            },
+            {
+              "name": {
+                "value": "tenho alguma coisa na sexta"
+              }
+            },
+            {
+              "name": {
+                "value": "quando é o exame de esinf"
+              }
+            },
+            {
+              "name": {
+                "value": "que materiais há em lapr3"
+              }
+            },
+            {
+              "name": {
+                "value": "o que foi publicado em esoft"
+              }
+            },
+            {
+              "name": {
+                "value": "quais são as minhas disciplinas"
+              }
+            },
+            {
+              "name": {
+                "value": "tenho trabalhos para entregar"
+              }
+            },
+            {
+              "name": {
+                "value": "quando tenho de entregar o relatório"
+              }
+            },
+            {
+              "name": {
+                "value": "o que há de novo no moodle"
+              }
+            },
+            {
+              "name": {
+                "value": "qual é a matéria do teste de mdisc"
+              }
+            },
+            {
+              "name": {
+                "value": "há algum teste este mês"
+              }
+            },
+            {
+              "name": {
+                "value": "o que tenho na segunda de manhã"
+              }
+            },
+            {
+              "name": {
+                "value": "em que dia é a apresentação do sprint"
+              }
+            },
+            {
+              "name": {
+                "value": "que slides há de scomp"
+              }
+            },
+            {
+              "name": {
+                "value": "quantas entregas tenho até sexta"
+              }
+            },
+            {
+              "name": {
+                "value": "qual é o próximo evento"
+              }
+            },
+            {
+              "name": {
+                "value": "diz-me o que tenho para fazer"
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }

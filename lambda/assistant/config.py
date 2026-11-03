@@ -28,10 +28,12 @@ def _file_settings() -> dict[str, str]:
     return {}
 
 
-# TODO(v0.2): accept a default, for optional settings such as the LLM model name.
-def get_setting(name: str) -> str:
-    """Return a setting by its upper-case env name (e.g. ``MOODLE_ICAL_URL``)."""
-    value = os.environ.get(name) or _file_settings().get(name.lower())
+def get_setting(name: str, default: str | None = None) -> str:
+    """Return a setting by its upper-case env name (e.g. ``MOODLE_TOKEN``).
+
+    Raises ``ConfigError`` if it is missing and no ``default`` is given.
+    """
+    value = os.environ.get(name) or _file_settings().get(name.lower()) or default
     if not value:
         raise ConfigError(f"Missing setting {name!r}: set it as an env var or in config.json.")
     return value

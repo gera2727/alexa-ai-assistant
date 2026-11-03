@@ -1,3 +1,6 @@
 {
-  "moodle_ical_url": "https://<your-moodle>/calendar/export_execute.php?userid=<id>&authtoken=<token>&preset_what=all&preset_time=recentupcoming"
+  "moodle_url": "https://<your-moodle>",
+  "moodle_token": "<run scripts/get_moodle_token.py>",
+  "groq_api_key": "<your Groq API key>",
+  "groq_model": "llama-3.3-70b-versatile"
 }

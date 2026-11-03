@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 
 from ask_sdk_core.skill_builder import SkillBuilder
 
+from assistant.agent import Assistant
 from assistant.config import get_setting
 from assistant.handlers.builtin import (
     CancelOrStopIntentHandler,
@@ -14,39 +16,40 @@ from assistant.handlers.builtin import (
     LaunchRequestHandler,
     SessionEndedRequestHandler,
 )
-from assistant.handlers.calendar import (
-    Clock,
-    EventProvider,
-    EventsByDateIntentHandler,
-    NextEventIntentHandler,
-    UpcomingEventsIntentHandler,
-)
 from assistant.handlers.errors import CatchAllExceptionHandler
-from assistant.integrations.moodle import TIMEZONE, MoodleCalendar
+from assistant.handlers.question import Answerer, QuestionIntentHandler
+from assistant.integrations.llm import DEFAULT_MODEL, GroqClient
+from assistant.integrations.moodle_api import TIMEZONE, MoodleApi
+from assistant.tools import build_toolbox
 
 
 def _lisbon_now() -> datetime:
     return datetime.now(TIMEZONE)
 
 
-def _lazy_moodle_calendar() -> EventProvider:
-    """Read the URL on first use, so a missing setting becomes a spoken error, not a cold-start crash."""
-
-    def provider():
-        return MoodleCalendar(get_setting("MOODLE_ICAL_URL"))()
-
-    return provider
+def assistant_from_config(clock: Callable[[], datetime] = _lisbon_now) -> Assistant:
+    moodle = MoodleApi(get_setting("MOODLE_URL"), get_setting("MOODLE_TOKEN"))
+    llm = GroqClient(get_setting("GROQ_API_KEY"), model=get_setting("GROQ_MODEL", DEFAULT_MODEL))
+    return Assistant(llm, build_toolbox(moodle, clock), clock)
 
 
-# TODO(v0.2): wire QuestionIntentHandler with a lazily built Assistant (LLM + Moodle tools).
-def build_skill(events: EventProvider | None = None, clock: Clock = _lisbon_now) -> SkillBuilder:
-    events = events or _lazy_moodle_calendar()
+class _LazyAssistant:
+    """Builds the real assistant on first use, so a missing setting becomes a spoken error, not a cold-start crash."""
+
+    def __init__(self) -> None:
+        self._assistant: Assistant | None = None
+
+    def answer(self, question: str) -> str:
+        if self._assistant is None:
+            self._assistant = assistant_from_config()
+        return self._assistant.answer(question)
+
+
+def build_skill(assistant: Answerer | None = None) -> SkillBuilder:
     builder = SkillBuilder()
     for handler in (
         LaunchRequestHandler(),
-        UpcomingEventsIntentHandler(events, clock),
-        EventsByDateIntentHandler(events, clock),
-        NextEventIntentHandler(events, clock),
+        QuestionIntentHandler(assistant or _LazyAssistant()),
         HelpIntentHandler(),
         CancelOrStopIntentHandler(),
         FallbackIntentHandler(),

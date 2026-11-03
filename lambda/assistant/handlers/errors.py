@@ -5,11 +5,12 @@ import logging
 from ask_sdk_core.dispatch_components import AbstractExceptionHandler
 
 from assistant.handlers.base import respond
+from assistant.integrations.llm import LLMError
 
 logger = logging.getLogger(__name__)
 
-# TODO(v0.2): add a specific message when the LLM rate limit (HTTP 429) is hit.
-GENERIC_ERROR = "Não consegui ler o teu calendário do Moodle. Tenta outra vez daqui a pouco."
+GENERIC_ERROR = "Desculpa, tive um problema a responder. Tenta outra vez daqui a pouco."
+RATE_LIMITED = "Estou com muitos pedidos neste momento. Tenta outra vez daqui a um minuto."
 
 
 class CatchAllExceptionHandler(AbstractExceptionHandler):
@@ -20,4 +21,6 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 
     def handle(self, handler_input, exception):
         logger.exception("Unhandled error", exc_info=exception)
+        if isinstance(exception, LLMError) and exception.rate_limited:
+            return respond(handler_input, RATE_LIMITED)
         return respond(handler_input, GENERIC_ERROR)

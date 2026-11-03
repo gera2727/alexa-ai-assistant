@@ -17,6 +17,7 @@ INTERESTING = [
     "core_enrol_get_users_courses",
     "core_course_get_contents",
     "core_calendar_get_action_events_by_timesort",
+    "core_calendar_get_calendar_events",
     "mod_assign_get_assignments",
     "gradereport_user_get_grade_items",
     "mod_forum_get_forum_discussions",
