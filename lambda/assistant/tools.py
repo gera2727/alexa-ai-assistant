@@ -133,7 +133,15 @@ def build_toolbox(moodle: MoodleApi, clock: Clock) -> ToolBox:
             (a for a in moodle.assignments([c.id for c in selected]) if a.due and a.due >= now),
             key=lambda a: a.due,
         )
-        return [{"course": names.get(a.course_id), "name": a.name, **_describe(a.due)} for a in pending]
+        return [
+            {
+                "course": names.get(a.course_id),
+                "name": a.name,
+                **({"details": a.details} if a.details else {}),
+                **_describe(a.due),
+            }
+            for a in pending
+        ]
 
     return ToolBox(
         [

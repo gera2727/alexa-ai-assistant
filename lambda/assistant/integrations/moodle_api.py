@@ -55,6 +55,7 @@ class Assignment:
     course_id: int
     name: str
     due: datetime | None  # None when the assignment has no due date
+    details: str = ""  # the assignment's instructions, or where it sits on the course page
 
 
 def _post_json(url: str, body: bytes, timeout: float) -> Any:
@@ -102,6 +103,7 @@ class MoodleApi:
         self._timeout = timeout
         self._transport = transport
         self._courses: list[Course] | None = None
+        self._where: dict[int, dict[tuple[str, int], str]] = {}
 
     def call(self, function: str, **params: Any) -> Any:
         # The token goes in the POST body, so it never ends up in server or proxy logs.
@@ -151,16 +153,54 @@ class MoodleApi:
                 start=_timestamp(event["timestart"]),
                 course_id=event.get("courseid") if event.get("courseid") in enrolled else None,
                 kind=event.get("modulename") or "",
-                details=_plain_text(event.get("description")),
+                details=_plain_text(event.get("description")) or self._where_is(event, enrolled),
             )
             for event in result.get("events", [])
+            if start <= _timestamp(event["timestart"]) < end
         ]
-        return sorted((e for e in events if start <= e.start < end), key=lambda e: e.start)
+        return sorted(events, key=lambda e: e.start)
+
+    def _where_is(self, event: dict[str, Any], enrolled: set[int]) -> str:
+        """For an activity without a description, say where it sits on the course page.
+
+        Teachers often name activities after class groups ("1DE - 1DF") and put the real
+        subject in the section title or in a heading just above (e.g. "Delivery Sprint 1").
+        """
+        course_id, kind, instance = event.get("courseid"), event.get("modulename"), event.get("instance")
+        if course_id not in enrolled or not kind or not instance:
+            return ""
+        if course_id not in self._where:
+            try:
+                self._where[course_id] = self._activity_places(course_id)
+            except MoodleError:
+                self._where[course_id] = {}
+        return self._where[course_id].get((kind, instance), "")
+
+    def _activity_places(self, course_id: int) -> dict[tuple[str, int], str]:
+        places: dict[tuple[str, int], str] = {}
+        for section in self.call("core_course_get_contents", courseid=course_id):
+            heading = ""
+            for module in section.get("modules", []):
+                if module.get("modname") == "label":
+                    heading = _plain_text(module.get("name"))
+                elif module.get("instance"):
+                    parts = [_plain_text(section.get("name")), heading]
+                    places[(module.get("modname", ""), module["instance"])] = " — ".join(p for p in parts if p)
+        return places
 
     def assignments(self, course_ids: list[int]) -> list[Assignment]:
         result = self.call("mod_assign_get_assignments", courseids=course_ids)
+        enrolled = {course.id for course in self.courses()}
         return [
-            Assignment(course_id=course["id"], name=a["name"].strip(), due=_timestamp(a.get("duedate")))
+            Assignment(
+                course_id=course["id"],
+                name=a["name"].strip(),
+                due=_timestamp(a.get("duedate")),
+                details=_plain_text(a.get("intro"))
+                or self._where_is(
+                    {"courseid": course["id"], "modulename": "assign", "instance": a.get("id")}, enrolled
+                ),
+            )
             for course in result.get("courses", [])
             for a in course.get("assignments", [])
         ]
