@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "agenda do isep",
+      "invocationName": "meu painel",
       "intents": [
         {
           "name": "AMAZON.CancelIntent",

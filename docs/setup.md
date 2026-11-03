@@ -48,7 +48,7 @@ If you use your own AWS Lambda instead, set the environment variables
 In the console's **Test** tab, enable *Development* and type:
 
 ```
-abre a agenda do isep
+abre o meu painel
 o que tenho amanhã
 quando é o próximo teste
 ```

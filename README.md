@@ -11,7 +11,11 @@ your university's Moodle in your own words: an LLM decides which data to fetch (
 courses, materials, assignments) through tool calling and answers in one short sentence.
 It runs entirely on free tiers.
 
-> **User:** "Alexa, pergunta à agenda do isep quando é o teste de ESINF."
+> **User:** "Alexa, abre o meu painel."
+>
+> **Alexa:** "Olá! Pergunta-me o que quiseres sobre as tuas aulas, testes, entregas ou materiais do Moodle."
+>
+> **User:** "Quando é o teste de ESINF?"
 >
 > **Alexa:** "O teste de ESINF é na sexta-feira, dia 6, às 10:00."
 

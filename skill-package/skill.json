@@ -7,9 +7,9 @@
           "summary": "Responde às tuas perguntas sobre aulas, testes, entregas e materiais do Moodle.",
           "description": "Faz perguntas livres sobre o teu Moodle: o que tens amanhã, quando é um teste, que entregas faltam ou que materiais foram publicados numa disciplina. As respostas são geradas por um modelo de linguagem com os teus dados do Moodle.",
           "examplePhrases": [
-            "Alexa, abre a agenda do isep",
-            "Alexa, pergunta à agenda do isep quando é o teste de arqcp",
-            "Alexa, pergunta à agenda do isep qual é a próxima entrega"
+            "Alexa, abre o meu painel",
+            "Quando é o teste de ARQCP?",
+            "Que entregas tenho esta semana?"
           ],
           "keywords": ["moodle", "calendário", "estudante"]
         }

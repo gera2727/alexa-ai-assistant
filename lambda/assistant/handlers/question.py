@@ -27,6 +27,6 @@ class QuestionIntentHandler(AbstractRequestHandler):
         question = (get_slot_value(handler_input, "question") or "").strip()
         if not question:
             return respond(handler_input, ASK_AGAIN, keep_open=True)
-        # One-shot ("Alexa, pergunta à agenda do isep ...") ends; a conversation started with "abre" stays open.
+        # One-shot ("Alexa, pergunta ao meu painel ...") ends; a conversation started with "abre" stays open.
         session = handler_input.request_envelope.session
         return respond(handler_input, self._assistant.answer(question), keep_open=bool(session and not session.new))

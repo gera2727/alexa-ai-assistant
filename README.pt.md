@@ -11,7 +11,11 @@ sobre o Moodle da tua faculdade, por palavras tuas: um LLM decide que dados ir b
 (calendário, disciplinas, materiais, trabalhos) através de tool calling e responde numa
 frase curta. Funciona inteiramente com planos gratuitos.
 
-> **Utilizador:** "Alexa, pergunta à agenda do isep quando é o teste de ESINF."
+> **Utilizador:** "Alexa, abre o meu painel."
+>
+> **Alexa:** "Olá! Pergunta-me o que quiseres sobre as tuas aulas, testes, entregas ou materiais do Moodle."
+>
+> **Utilizador:** "Quando é o teste de ESINF?"
 >
 > **Alexa:** "O teste de ESINF é na sexta-feira, dia 6, às 10:00."
 
