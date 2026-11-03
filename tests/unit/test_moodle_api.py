@@ -17,7 +17,13 @@ RESPONSES = {
     ],
     "core_calendar_get_calendar_events": {
         "events": [
-            {"name": "Teste ", "timestart": 1794045600, "courseid": 1},
+            {
+                "name": "Teste ",
+                "timestart": 1794045600,
+                "courseid": 1,
+                "modulename": "quiz",
+                "description": "<p>Matéria:&nbsp;<b>capítulos 1-3</b></p>",
+            },
             {"name": "Pessoal", "timestart": 1793836740, "courseid": 0},
             {"name": "Fora do intervalo", "timestart": 1893456000, "courseid": 1},
         ]
@@ -79,6 +85,15 @@ def test_calendar_events_send_nested_params_and_sort(api, calls):
     assert params["events[courseids][0]"] == "1" and params["events[courseids][1]"] == "2"
     assert params["options[timestart]"] == str(int(start.timestamp()))
     assert [(e.title, e.course_id) for e in events] == [("Pessoal", None), ("Teste", 1)]
+    assert (events[1].kind, events[1].details) == ("quiz", "Matéria: capítulos 1-3")
+    assert (events[0].kind, events[0].details) == ("", "")
+
+
+def test_long_descriptions_are_shortened():
+    from assistant.integrations.moodle_api import MAX_DETAILS_CHARS, _plain_text
+
+    text = _plain_text("<div>" + "palavra " * 200 + "</div>")
+    assert len(text) == MAX_DETAILS_CHARS and text.endswith("…")
 
 
 def test_moodle_exceptions_raise():

@@ -19,7 +19,13 @@ class FakeMoodle:
     def calendar_events(self, start, end):
         self.asked_range = (start, end)
         events = [
-            Event("Entrega Sprint 1", datetime(2026, 11, 4, 23, 59, tzinfo=TIMEZONE), 2),
+            Event(
+                "Entrega Sprint 1",
+                datetime(2026, 11, 4, 23, 59, tzinfo=TIMEZONE),
+                2,
+                kind="assign",
+                details="Relatório do Sprint 1",
+            ),
             Event("Teste de ARQCP", datetime(2026, 11, 6, 10, 0, tzinfo=TIMEZONE), 1),
             Event("Lembrete pessoal", datetime(2026, 11, 6, 18, 0, tzinfo=TIMEZONE), None),
         ]
@@ -74,6 +80,8 @@ def test_calendar_events_end_date_is_inclusive(tools, moodle):
         ("Teste de ARQCP", "ARQCP(85515)", "sexta-feira", "10:00"),
         ("Lembrete pessoal", None, "sexta-feira", "18:00"),
     ]
+    assert (events[0]["activity"], events[0]["details"]) == ("entrega de trabalho", "Relatório do Sprint 1")
+    assert "activity" not in events[1] and "details" not in events[1]
     start, end = moodle.asked_range
     assert (start.isoformat(), end.isoformat()) == ("2026-11-04T00:00:00+00:00", "2026-11-07T00:00:00+00:00")
 

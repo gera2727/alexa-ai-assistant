@@ -6,7 +6,9 @@ official Moodle app uses. See ``scripts/get_moodle_token.py``.
 
 from __future__ import annotations
 
+import html
 import json
+import re
 import urllib.parse
 import urllib.request
 from collections.abc import Callable
@@ -44,6 +46,8 @@ class Event:
     title: str
     start: datetime  # timezone-aware, in TIMEZONE
     course_id: int | None  # None for personal and site events
+    kind: str = ""  # activity type, e.g. "assign" or "quiz"; empty for plain calendar entries
+    details: str = ""  # the event description as plain text, shortened
 
 
 @dataclass(frozen=True)
@@ -73,6 +77,16 @@ def _flatten(params: dict[str, Any], prefix: str = "") -> dict[str, Any]:
         else:
             flat[name] = value
     return flat
+
+
+MAX_DETAILS_CHARS = 300
+_TAG = re.compile(r"<[^>]+>")
+
+
+def _plain_text(markup: str | None) -> str:
+    """Moodle descriptions are HTML. Keep only the words, shortened for the LLM."""
+    text = " ".join(html.unescape(_TAG.sub(" ", markup or "")).split())
+    return text if len(text) <= MAX_DETAILS_CHARS else text[: MAX_DETAILS_CHARS - 1].rstrip() + "…"
 
 
 def _timestamp(value: int | None) -> datetime | None:
@@ -136,6 +150,8 @@ class MoodleApi:
                 title=event["name"].strip(),
                 start=_timestamp(event["timestart"]),
                 course_id=event.get("courseid") if event.get("courseid") in enrolled else None,
+                kind=event.get("modulename") or "",
+                details=_plain_text(event.get("description")),
             )
             for event in result.get("events", [])
         ]

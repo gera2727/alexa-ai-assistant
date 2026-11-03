@@ -18,6 +18,8 @@ Clock = Callable[[], datetime]
 
 MAX_EVENTS = 25
 MAX_ITEMS_PER_SECTION = 15
+# Moodle module names -> words the LLM can say in Portuguese.
+ACTIVITY_NAMES = {"assign": "entrega de trabalho", "quiz": "teste/quiz", "forum": "fórum", "lesson": "lição"}
 WEEKDAYS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
 
 
@@ -99,7 +101,16 @@ def build_toolbox(moodle: MoodleApi, clock: Clock) -> ToolBox:
         end = datetime(last.year, last.month, last.day, tzinfo=TIMEZONE) + timedelta(days=1)
         names = course_names()
         found = moodle.calendar_events(start, end)[:MAX_EVENTS]
-        return [{"title": e.title, "course": names.get(e.course_id), **_describe(e.start)} for e in found]
+        return [
+            {
+                "title": e.title,
+                "course": names.get(e.course_id),
+                **({"activity": ACTIVITY_NAMES.get(e.kind, e.kind)} if e.kind else {}),
+                **({"details": e.details} if e.details else {}),
+                **_describe(e.start),
+            }
+            for e in found
+        ]
 
     def list_courses() -> list[dict[str, str]]:
         return [{"shortname": c.shortname, "fullname": c.fullname} for c in moodle.courses()]
@@ -128,7 +139,8 @@ def build_toolbox(moodle: MoodleApi, clock: Clock) -> ToolBox:
         [
             Tool(
                 "get_calendar_events",
-                "Moodle calendar events (tests, exams, deadlines, course events) between two dates, inclusive.",
+                "Moodle calendar events (tests, exams, deadlines, course events) between two dates, inclusive. "
+                "'activity' and 'details' say what an event is about (e.g. which work is due).",
                 {
                     "type": "object",
                     "properties": {
