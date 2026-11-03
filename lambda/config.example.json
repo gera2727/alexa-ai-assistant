@@ -1,0 +1,3 @@
+{
+  "moodle_ical_url": "https://<your-moodle>/calendar/export_execute.php?userid=<id>&authtoken=<token>&preset_what=all&preset_time=recentupcoming"
+}
