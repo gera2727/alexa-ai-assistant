@@ -16,7 +16,7 @@ Copy `lambda/config.example.json` to `lambda/config.json`. This file is git-igno
 | `moodle_url` | Your Moodle address, e.g. `https://moodle.example.edu`. |
 | `moodle_token` | Run `python3 scripts/get_moodle_token.py` (same username and password as the Moodle app). It saves the token for you. |
 | `groq_api_key` | Groq console → **API Keys → Create API Key**. |
-| `groq_model` | Optional. Defaults to `llama-3.3-70b-versatile`. |
+| `groq_model` | Optional. Defaults to `openai/gpt-oss-120b`. |
 
 Check that Moodle answers:
 

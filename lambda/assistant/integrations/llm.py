@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile was retired by Groq in August 2026
 DEFAULT_TIMEOUT_S = 4.0
 
 # (url, headers, JSON payload, timeout) -> decoded JSON. Injected in tests.
@@ -47,7 +47,17 @@ def _post_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeo
         with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
             return json.load(response)
     except urllib.error.HTTPError as error:
-        raise LLMError(f"LLM API returned HTTP {error.code}", rate_limited=error.code == 429) from error
+        raise LLMError(
+            f"LLM API returned HTTP {error.code}: {_error_detail(error)}", rate_limited=error.code == 429
+        ) from error
+
+
+def _error_detail(error: urllib.error.HTTPError) -> str:
+    """The provider's own explanation (e.g. "model not found"). It never contains the API key."""
+    try:
+        return str(json.load(error)["error"]["message"])[:200]
+    except (ValueError, KeyError, TypeError, OSError):
+        return error.reason or "no details"
 
 
 def _parse_arguments(raw: str | None) -> dict[str, Any]:
@@ -76,7 +86,10 @@ class GroqClient:
         self._transport = transport
 
     def chat(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None) -> Reply:
-        payload: dict[str, Any] = {"model": self._model, "messages": messages, "temperature": 0.2, "max_tokens": 300}
+        payload: dict[str, Any] = {"model": self._model, "messages": messages, "temperature": 0.2, "max_tokens": 1024}
+        if self._model.startswith("openai/gpt-oss"):
+            # Reasoning model: keep the thinking short so the answer fits in Alexa's ~8 s limit.
+            payload["reasoning_effort"] = "low"
         if tools:
             payload["tools"] = tools
         response = self._transport(API_URL, self._headers, payload, self._timeout)
@@ -93,4 +106,8 @@ class GroqClient:
             )
             for call in message.get("tool_calls") or []
         ]
-        return Reply(content=(message.get("content") or "").strip(), tool_calls=calls, message=message)
+        # Only the standard fields go back into the history (reasoning models add extra ones).
+        history_message = {"role": "assistant", "content": message.get("content") or ""}
+        if message.get("tool_calls"):
+            history_message["tool_calls"] = message["tool_calls"]
+        return Reply(content=(message.get("content") or "").strip(), tool_calls=calls, message=history_message)

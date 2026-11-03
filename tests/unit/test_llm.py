@@ -41,7 +41,7 @@ def test_tool_calls_are_parsed():
         ("c1", "list_courses", {}),
         ("c2", "x", {"course": "ARQCP"}),
     ]
-    assert reply.message is message
+    assert reply.message == {"role": "assistant", "content": "", "tool_calls": message["tool_calls"]}
     assert sent["payload"]["tools"] == [{"type": "function"}]
 
 
@@ -54,3 +54,18 @@ def test_malformed_tool_arguments_become_empty():
 def test_unexpected_response_raises():
     with pytest.raises(LLMError):
         _client({"error": "boom"}, {}).chat([])
+
+
+def test_reasoning_models_think_briefly_and_extra_fields_are_dropped():
+    sent = {}
+    response = {"choices": [{"message": {"role": "assistant", "content": "Olá", "reasoning": "..."}}]}
+    client = GroqClient("k", model="openai/gpt-oss-120b", transport=lambda u, h, p, t: sent.update(p) or response)
+    reply = client.chat([])
+    assert sent["reasoning_effort"] == "low"
+    assert reply.message == {"role": "assistant", "content": "Olá"}
+
+
+def test_other_models_get_no_reasoning_option():
+    sent = {}
+    _client({"choices": [{"message": {"content": "x"}}]}, sent).chat([])
+    assert "reasoning_effort" not in sent["payload"]
