@@ -1,0 +1,69 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "agenda do isep",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "UpcomingEventsIntent",
+          "slots": [],
+          "samples": [
+            "o que tenho esta semana",
+            "o que tenho nos próximos dias",
+            "quais são os meus eventos",
+            "o que tenho para fazer",
+            "que entregas tenho",
+            "o que há no moodle"
+          ]
+        },
+        {
+          "name": "EventsByDateIntent",
+          "slots": [
+            {
+              "name": "date",
+              "type": "AMAZON.DATE"
+            }
+          ],
+          "samples": [
+            "o que tenho {date}",
+            "o que tenho para {date}",
+            "que eventos tenho {date}",
+            "tenho alguma coisa {date}",
+            "o que há no moodle {date}"
+          ]
+        },
+        {
+          "name": "NextEventIntent",
+          "slots": [],
+          "samples": [
+            "qual é a próxima entrega",
+            "qual é o próximo evento",
+            "o que é que vem a seguir",
+            "qual é o próximo teste",
+            "quando é a próxima entrega"
+          ]
+        }
+      ],
+      "types": []
+    }
+  }
+}
