@@ -1,0 +1,16 @@
+# Secrets: the Moodle URL contains a personal token
+lambda/config.json
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Tooling
+.ask/
+.vscode/
+.idea/
+.DS_Store
