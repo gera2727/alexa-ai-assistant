@@ -18,4 +18,4 @@ Use an **Alexa-hosted** skill (Python runtime).
 - ✅ Deploys from the developer console in one click.
 - ❌ No environment variables, so secrets go in a git-ignored `config.json`.
 - ❌ Less control (region, runtime version, IAM). Moving to our own Lambda later only
-  requires setting `MOODLE_ICAL_URL` as an env var. The code already supports both.
+  requires setting the secrets (`MOODLE_TOKEN`, `GROQ_API_KEY`...) as env vars. The code already supports both.

@@ -6,35 +6,38 @@
 
 [English](README.md) · **Português**
 
-Assistente de voz pessoal para a Amazon Alexa, escrito em Python. Lê os prazos da
-faculdade a partir do Moodle e, na próxima fase, responde a perguntas abertas com um LLM.
-Funciona inteiramente com planos gratuitos.
+Assistente de voz pessoal para a Amazon Alexa, escrito em Python. Pergunta o que quiseres
+sobre o Moodle da tua faculdade, por palavras tuas: um LLM decide que dados ir buscar
+(calendário, disciplinas, materiais, trabalhos) através de tool calling e responde numa
+frase curta. Funciona inteiramente com planos gratuitos.
 
-> **Utilizador:** "Alexa, pergunta à agenda do isep o que tenho esta semana."
+> **Utilizador:** "Alexa, pergunta à agenda do isep quando é o teste de ESINF."
 >
-> **Alexa:** "Nos próximos 7 dias tens 2 eventos: Entrega Sprint 1, de LAPR3, amanhã às 23:59; e Teste de ESINF, de ESINF, sexta-feira às 10:00."
+> **Alexa:** "O teste de ESINF é na sexta-feira, dia 6, às 10:00."
 
 ## Funcionalidades
 
 | Funcionalidade | Exemplo de frase | Estado |
 |---|---|---|
-| Prazos dos próximos 7 dias | "o que tenho esta semana" | ✅ |
-| Eventos num dia ou semana | "o que tenho amanhã", "para a semana" | ✅ |
-| Próximo prazo | "qual é a próxima entrega" | ✅ |
-| Perguntas abertas com um LLM | "explica-me recursividade" | 🔜 [Sprint 2](https://github.com/gera2727/alexa-ai-assistant/milestone/2) |
-| Filtrar por disciplina | "o que tenho de ESINF" | 📋 Backlog |
+| Calendário: testes, exames, prazos | "o que tenho amanhã", "quando é o teste de ESINF" | ✅ |
+| Prazos de trabalhos, por disciplina | "que entregas tenho de LAPR3" | ✅ |
+| Materiais das disciplinas | "que materiais há em ARQCP" | ✅ |
+| Disciplinas inscritas | "quais são as minhas disciplinas" | ✅ |
+| Horário e salas | "onde é que tenho aula hoje" | 📋 Backlog |
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-    E[Echo / simulador] --> A[Serviço Alexa] -- IntentRequest --> L[Lambda: handlers]
-    L --> M[(iCal do Moodle)]
-    L -.-> G[(LLM free tier)]
+    E[Echo / simulador] --> A[Serviço Alexa] -- "QuestionIntent" --> L[Lambda: assistente]
+    L <-- tool calls --> G[(LLM Groq)]
+    L --> M[(Moodle Web Services)]
 ```
 
-Os handlers são finos e recebem as dependências por injeção. As integrações nunca
-importam o SDK da Alexa, por isso são testadas isoladamente. Detalhes em
+Um único intent "apanha-tudo" envia a pergunta inteira para um ciclo de agente. O LLM
+chama ferramentas só de leitura, as ferramentas chamam o Moodle, e cada camada recebe as
+dependências por injeção, por isso todas são testadas sem rede. A decisão está explicada
+no [ADR 0004](docs/adr/0004-free-form-questions.md) (em inglês). Detalhes em
 [docs/architecture.md](docs/architecture.md) (em inglês).
 
 ## Estrutura do projeto
@@ -48,15 +51,15 @@ importam o SDK da Alexa, por isso são testadas isoladamente. Detalhes em
 │   └── assistant/
 │       ├── skill.py             # Composition root: liga handlers e dependências
 │       ├── config.py            # Configuração a partir de variáveis de ambiente ou config.json
-│       ├── dates.py             # Interpretação do slot AMAZON.DATE
-│       ├── speech.py            # Construção das frases em português europeu
-│       ├── handlers/            # Um módulo por área (builtin, calendar, errors)
-│       └── integrations/        # Serviços externos (moodle; llm a seguir)
+│       ├── agent.py             # Ciclo de tool calling do LLM e prompt de sistema
+│       ├── tools.py             # Ferramentas (só de leitura) que o LLM pode chamar
+│       ├── handlers/            # Handlers da Alexa (question, builtin, errors)
+│       └── integrations/        # moodle_api, llm (sem imports da Alexa)
+├── scripts/                     # Ajudas de configuração: obter o token do Moodle, testar a API
 ├── skill-package/               # Manifesto da skill e modelo de interação
 ├── tests/
 │   ├── unit/                    # Funções puras, sem SDK
-│   ├── integration/             # Pedido Alexa completo → resposta falada
-│   └── fixtures/                # .ics de exemplo
+│   └── integration/             # Pedido Alexa completo → resposta falada
 └── docs/
     ├── architecture.md
     ├── setup.md
@@ -77,13 +80,14 @@ Para publicar numa skill Alexa real, segue o [docs/setup.md](docs/setup.md).
 
 ## Práticas de engenharia
 
-- **Testes:** testes unitários para a lógica pura, mais testes end-to-end que enviam
-  pedidos Alexa reais pela skill, com um calendário falso e um relógio fixo.
+- **Testes:** cada integração é testada com um transporte falso (sem rede), o ciclo do agente
+  com um LLM "guionado", e os testes end-to-end enviam pedidos Alexa reais pela skill.
 - **CI:** o GitHub Actions corre o `ruff` (lint e formatação) e o `pytest` em Python 3.10 e 3.12.
-- **Decisões** registadas como [ADRs](docs/adr/README.md): alojamento, idioma e escolha do LLM.
+- **Decisões** registadas como [ADRs](docs/adr/README.md): alojamento, idioma, fornecedor do LLM e o design das perguntas livres.
 - **Processo:** Scrum individual, com sprints semanais, gerido no [board do GitHub Projects](https://github.com/gera2727/alexa-ai-assistant/projects).
-- **Segurança:** o URL do Moodle contém um token pessoal. É lido do ambiente ou de um
-  ficheiro ignorado pelo Git, e nunca é registado nos logs.
+- **Segurança:** o token do Moodle e a chave do Groq são lidos do ambiente
+  ou de um ficheiro ignorado pelo Git, enviados no corpo dos pedidos (nunca no URL) e nunca
+  registados nos logs. As ferramentas são só de leitura.
 
 ## Roadmap
 

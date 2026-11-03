@@ -8,3 +8,4 @@ Format: [Michael Nygard's template](https://cognitect.com/blog/2011/11/15/docume
 | [0001](0001-alexa-hosted.md) | Host the skill on Alexa-hosted Lambda | Accepted |
 | [0002](0002-pt-br-locale.md) | Use the pt-BR locale with European Portuguese responses | Accepted |
 | [0003](0003-free-tier-llm.md) | Use a free-tier LLM behind a provider interface | Accepted |
+| [0004](0004-free-form-questions.md) | Answer free-form questions with one catch-all intent and LLM tool calling | Accepted |

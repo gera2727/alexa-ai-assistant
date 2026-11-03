@@ -20,8 +20,8 @@ Options considered:
 
 ## Decision
 
-Start with **Groq**. Hide the provider behind a single function
-(`integrations/llm.py: ask(prompt) -> str`) so switching provider is a one-file change.
+Start with **Groq**. Hide the provider behind one module (`integrations/llm.py`, `GroqClient.chat`)
+using the OpenAI-compatible chat API, so switching provider is a one-file change.
 
 ## Consequences
 

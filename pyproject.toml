@@ -1,7 +1,7 @@
 [project]
 name = "alexa-ai-assistant"
-version = "0.1.0"
-description = "Personal Alexa skill that reads a Moodle calendar and answers questions with an LLM."
+version = "0.2.0"
+description = "Personal Alexa skill that answers free-form questions about Moodle with an LLM and tool calling."
 requires-python = ">=3.10"
 license = { text = "MIT" }
 

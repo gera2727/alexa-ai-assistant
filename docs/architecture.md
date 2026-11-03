@@ -6,20 +6,21 @@
 flowchart LR
     U([User]) -- voice --> E[Echo device / simulator]
     E --> A[Alexa service<br/>pt-BR interaction model]
-    A -- IntentRequest JSON --> L[AWS Lambda<br/>lambda_function.py]
-    L --> H[Handlers]
-    H --> S[speech.py]
-    H --> I[Integrations]
-    I -- HTTPS --> M[(Moodle iCal export)]
-    I -. phase 2 .-> LLM[(LLM free tier)]
+    A -- "QuestionIntent {question}" --> L[AWS Lambda<br/>lambda_function.py]
+    L --> H[QuestionIntentHandler]
+    H --> AG[Assistant<br/>agent.py]
+    AG <-- "chat + tool calls" --> LLM[(Groq LLM)]
+    AG --> T[Tools<br/>tools.py]
+    T -- HTTPS --> WS[(Moodle Web Services)]
 ```
 
-1. The Alexa service turns speech into an **intent** plus **slots**, using the
-   interaction model in `skill-package/interactionModels/custom/pt-BR.json`.
-2. Lambda receives the request. `assistant/skill.py` routes it to the first
-   handler whose `can_handle` returns `True`.
-3. The handler asks an **integration** for data, then uses `speech.py` to
-   build the sentence Alexa will say.
+1. The Alexa service captures the whole sentence in the `question` slot of `QuestionIntent`
+   (a catch-all custom slot, see [ADR 0004](adr/0004-free-form-questions.md)).
+2. `QuestionIntentHandler` passes the question to the `Assistant`.
+3. The `Assistant` sends the question to the LLM with the list of available tools. The LLM asks for
+   the data it needs (for example `get_calendar_events` for "o que tenho amanhã"), the tools fetch it
+   from Moodle, and the results go back to the LLM, at most `MAX_TOOL_ROUNDS` times.
+4. The LLM's final short answer, in European Portuguese, is what Alexa says.
 
 ## Layers
 
@@ -27,35 +28,41 @@ flowchart LR
 |---|---|---|---|
 | Entry point | `lambda/lambda_function.py` | `skill` | One line. The name is fixed by Alexa-hosted skills. |
 | Composition root | `lambda/assistant/skill.py` | everything | The only place where concrete dependencies are chosen. |
-| Handlers | `lambda/assistant/handlers/` | Alexa SDK, speech, integrations | Thin: parse the request, call a service, respond. |
-| Speech | `lambda/assistant/speech.py` | domain types | Pure functions. All user-facing Portuguese text lives here or in handler constants. |
-| Dates | `lambda/assistant/dates.py` | — | Parses `AMAZON.DATE` slot values. Pure. |
-| Integrations | `lambda/assistant/integrations/` | stdlib, third-party clients | **Must not import the Alexa SDK**, so they can be reused and tested alone. |
+| Handlers | `lambda/assistant/handlers/` | Alexa SDK | Thin: read the slot, call the assistant, respond. |
+| Agent | `lambda/assistant/agent.py` | a `ChatModel`, `ToolBox` | The tool-calling loop and the system prompt. No HTTP. |
+| Tools | `lambda/assistant/tools.py` | integrations | Read-only functions + JSON schemas the LLM can call. |
+| Integrations | `lambda/assistant/integrations/` | stdlib only | **Must not import the Alexa SDK.** One module per external service. |
+
+| Integration | Talks to |
+|---|---|
+| `moodle_api.py` | Moodle Web Services REST: calendar events, courses, materials, assignments |
+| `llm.py` | Groq's OpenAI-compatible chat completions API |
 
 ## Dependency injection
 
-Handlers receive their dependencies through the constructor:
+Every class receives its collaborators through the constructor, so tests replace the network with fakes:
 
 ```python
-UpcomingEventsIntentHandler(events=MoodleCalendar(url), clock=lisbon_now)
+Assistant(llm=GroqClient(key), tools=build_toolbox(calendar, moodle, clock), clock=lisbon_now)
+MoodleApi(url, token, transport=fake_transport)  # tests: canned JSON, no HTTP
+build_skill(assistant=FakeAssistant())  # tests: full Alexa envelope, no LLM
 ```
 
-`events` is any callable that returns `list[Event]`, and `clock` any callable that
-returns the current `datetime`. Tests pass fakes (`lambda: sample_events`), so the
-full request → response path is tested with no network and a fixed "now".
+`skill.py` builds the real `Assistant` lazily on the first question, so a missing setting is spoken
+as an error instead of crashing the Lambda at cold start.
 
 ## Constraints that shaped the design
 
-- **~8 second response limit.** Alexa drops slow responses. The iCal download has a
-  4 s timeout, and the LLM provider is chosen for latency (see [ADR 0003](adr/0003-free-tier-llm.md)).
-- **No secrets in Git.** The Moodle URL contains a personal token. See [`config.py`](../lambda/assistant/config.py).
-- **Zero cost.** See [ADR 0001](adr/0001-alexa-hosted.md).
+- **~8 second response limit.** Short timeouts (Groq 4 s, Moodle 3 s), at most 3 tool rounds,
+  and the course list is cached in a warm Lambda container.
+- **No secrets in Git.** The Moodle token and Groq key live in a git-ignored `config.json`
+  or in environment variables. Tokens are sent in request bodies, never in URLs or logs. See [`config.py`](../lambda/assistant/config.py).
+- **Prompt injection.** Tools are read-only, and the system prompt treats tool output as data.
+- **Zero cost.** See [ADR 0001](adr/0001-alexa-hosted.md) and [ADR 0003](adr/0003-free-tier-llm.md).
 - **No pt-PT locale.** See [ADR 0002](adr/0002-pt-br-locale.md).
 
-## Adding an integration
+## Adding a data source
 
-1. Create `lambda/assistant/integrations/<name>.py`. Keep it free of Alexa imports.
-2. Add unit tests in `tests/unit/test_<name>.py`.
-3. Add an intent and sample utterances to the interaction model.
-4. Add a handler in `lambda/assistant/handlers/` and register it in `skill.py`.
-5. Add an end-to-end test in `tests/integration/`.
+1. Create `lambda/assistant/integrations/<name>.py`, free of Alexa imports, with unit tests.
+2. Add a `Tool` (name, description, JSON schema, function) in `build_toolbox` in `tools.py`.
+3. Test it in `tests/unit/test_tools.py`. No intent or interaction model change is needed.
