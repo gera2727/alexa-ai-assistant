@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Sequence
 
 from ask_sdk_core.skill_builder import SkillBuilder
 
@@ -39,10 +39,10 @@ class _LazyAssistant:
     def __init__(self) -> None:
         self._assistant: Assistant | None = None
 
-    def answer(self, question: str) -> str:
+    def answer(self, question: str, history: Sequence[dict[str, str]] = ()) -> str:
         if self._assistant is None:
             self._assistant = assistant_from_config()
-        return self._assistant.answer(question)
+        return self._assistant.answer(question, history)
 
 
 def build_skill(assistant: Answerer | None = None) -> SkillBuilder:
