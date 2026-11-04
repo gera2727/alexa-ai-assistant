@@ -1,7 +1,7 @@
 # Alexa AI Assistant
 
 [![CI](https://github.com/gera2727/alexa-ai-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/gera2727/alexa-ai-assistant/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **English** · [Português](README.pt.md)
@@ -85,7 +85,7 @@ To deploy to a real Alexa skill, follow [docs/setup.md](docs/setup.md).
 
 - **Tests:** every integration is tested with a fake transport (no network), the agent loop
   with a scripted LLM, and end-to-end tests send real Alexa request envelopes through the skill.
-- **CI:** GitHub Actions runs `ruff` (lint and format) and `pytest` on Python 3.10 and 3.12.
+- **CI:** GitHub Actions runs `ruff` (lint and format) and `pytest` on Python 3.8 (the Alexa-hosted runtime) and 3.12.
 - **Decisions** are recorded as [ADRs](docs/adr/README.md): hosting, locale, LLM provider and the free-form design.
 - **Process:** a solo Scrum with weekly sprints, tracked on the [GitHub Project board](https://github.com/gera2727/alexa-ai-assistant/projects).
 - **Security:** the Moodle token and Groq key are read from the environment or a

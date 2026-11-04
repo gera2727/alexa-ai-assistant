@@ -1,7 +1,7 @@
 # Alexa AI Assistant
 
 [![CI](https://github.com/gera2727/alexa-ai-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/gera2727/alexa-ai-assistant/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 [English](README.md) · **Português**
@@ -86,7 +86,7 @@ Para publicar numa skill Alexa real, segue o [docs/setup.md](docs/setup.md).
 
 - **Testes:** cada integração é testada com um transporte falso (sem rede), o ciclo do agente
   com um LLM "guionado", e os testes end-to-end enviam pedidos Alexa reais pela skill.
-- **CI:** o GitHub Actions corre o `ruff` (lint e formatação) e o `pytest` em Python 3.10 e 3.12.
+- **CI:** o GitHub Actions corre o `ruff` (lint e formatação) e o `pytest` em Python 3.8 (o runtime das skills Alexa-hosted) e 3.12.
 - **Decisões** registadas como [ADRs](docs/adr/README.md): alojamento, idioma, fornecedor do LLM e o design das perguntas livres.
 - **Processo:** Scrum individual, com sprints semanais, gerido no [board do GitHub Projects](https://github.com/gera2727/alexa-ai-assistant/projects).
 - **Segurança:** o token do Moodle e a chave do Groq são lidos do ambiente

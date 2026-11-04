@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from datetime import datetime
+from typing import Callable
 
 from ask_sdk_core.skill_builder import SkillBuilder
 

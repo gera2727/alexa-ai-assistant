@@ -9,16 +9,16 @@ from __future__ import annotations
 import json
 import urllib.error
 import urllib.request
-from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable, Dict
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile was retired by Groq in August 2026
 DEFAULT_TIMEOUT_S = 4.0
 
 # (url, headers, JSON payload, timeout) -> decoded JSON. Injected in tests.
-Transport = Callable[[str, dict[str, str], dict[str, Any], float], dict[str, Any]]
+# typing (not collections.abc or builtins) so it can be subscripted on Python 3.8.
+Transport = Callable[[str, Dict[str, str], Dict[str, Any], float], Dict[str, Any]]
 
 
 class LLMError(RuntimeError):

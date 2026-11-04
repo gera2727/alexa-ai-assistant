@@ -7,10 +7,9 @@ follow the OpenAI/Groq "function" format. All tools are read-only.
 from __future__ import annotations
 
 import unicodedata
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Any
+from typing import Any, Callable
 
 from assistant.integrations.moodle_api import TIMEZONE, Course, MoodleApi
 

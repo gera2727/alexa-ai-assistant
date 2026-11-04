@@ -2,7 +2,7 @@
 name = "alexa-ai-assistant"
 version = "0.2.0"
 description = "Personal Alexa skill that answers free-form questions about Moodle with an LLM and tool calling."
-requires-python = ">=3.10"
+requires-python = ">=3.8"  # Alexa-hosted skills run Python 3.8
 license = { text = "MIT" }
 
 [tool.pytest.ini_options]
@@ -13,7 +13,7 @@ filterwarnings = ["ignore:Deprecated method:DeprecationWarning"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py38"
 src = ["lambda", "tests"]
 
 [tool.ruff.lint]

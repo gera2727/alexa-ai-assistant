@@ -11,11 +11,14 @@ import json
 import re
 import urllib.parse
 import urllib.request
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
-from zoneinfo import ZoneInfo
+from typing import Any, Callable
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:  # Python 3.8, the runtime of Alexa-hosted skills
+    from backports.zoneinfo import ZoneInfo  # type: ignore[no-redef]
 
 TIMEZONE = ZoneInfo("Europe/Lisbon")
 DEFAULT_TIMEOUT_S = 3.0

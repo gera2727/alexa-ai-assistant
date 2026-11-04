@@ -1,2 +1,3 @@
 ask-sdk-core>=1.19
 tzdata
+backports.zoneinfo; python_version < "3.9"

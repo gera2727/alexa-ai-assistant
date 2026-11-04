@@ -4,7 +4,7 @@
 
 - An [Amazon Developer](https://developer.amazon.com/) account (free).
 - A [Groq](https://console.groq.com/) account and API key (free tier).
-- Python 3.10+ for local development.
+- Python 3.8+ (Alexa-hosted skills run Python 3.8).
 - A Moodle account whose site allows the mobile app (most universities do).
 
 ## 1. Create `lambda/config.json`
